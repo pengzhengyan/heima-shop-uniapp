@@ -1,17 +1,50 @@
 <script setup lang="ts">
 import CustomNavbar from './components/CustomNavbar.vue'
+import CategoryPanel from './components/CategoryPanel.vue'
+import { getHomeBannerAPI, getHomeCategoryAPI } from '@/services/home'
+import { onLoad } from '@dcloudio/uni-app'
+import type { BannerItem, CategoryItem } from '@/types/home'
+import { ref } from 'vue'
+
+const bannerList = ref<BannerItem[]>([])
+const getHomeBannerData = async () => {
+  const res = await getHomeBannerAPI()
+  bannerList.value = res.result
+}
+
+const categoryList = ref<CategoryItem[]>([])
+const getHomeCategoryData = async () => {
+  const res = await getHomeCategoryAPI()
+  categoryList.value = res.result
+}
+
+const isTriggered = ref(false)
+const onRefresherrefresh = async () => {
+  isTriggered.value = true
+  await Promise.all([getHomeBannerData(), getHomeCategoryData()])
+  // 关闭动画
+  isTriggered.value = false
+}
+
+onLoad(() => {
+  getHomeBannerData()
+  getHomeCategoryData()
+})
 </script>
 
 <template>
   <view class="index">
     <CustomNavbar></CustomNavbar>
-    <XtxSwiper />
-    <!-- <uni-card title="基础卡片"
-              sub-title="副标题"
-              extra="额外信息"
-              thumbnail="https://qiniu-web-assets.dcloud.net.cn/unidoc/zh/unicloudlogo.png">
-      <text>这是一个带头像和双标题的基础卡片，此示例展示了一个完整的卡片。</text>
-    </uni-card> -->
+
+    <scroll-view refresher-enabled
+                 :refresher-triggered="isTriggered"
+                 @refresherrefresh="onRefresherrefresh">
+      <!-- 自定义navbar -->
+      <!-- 首页轮翻广告图 -->
+      <XtxSwiper :list="bannerList" />
+      <!-- 首页分类 -->
+      <CategoryPanel :list="categoryList" />
+    </scroll-view>
   </view>
 </template>
 
